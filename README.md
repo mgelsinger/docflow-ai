@@ -1,59 +1,88 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# DocFlow AI
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+DocFlow AI is a Laravel + Vue 3 application that turns unstructured documents into structured data. Upload PDFs or images, let an on-prem LLM (Ollama + Qwen) classify them, and receive clean, export-ready records for invoices, contracts, and general documents.
 
-## About Laravel
+## Why it matters
+- **Automates document intake** so teams spend less time on data entry.
+- **AI-powered classification & extraction** with transparent JSON exports and retry flows when something goes wrong.
+- **Built for developers** with a clean Laravel backend, Inertia-powered Vue frontend, and queue-based processing you can deploy anywhere.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Feature highlights
+- Document uploads for PDF/JPG/PNG with per-user access controls.
+- Automatic classification into invoices, contracts, or general documents using Ollama + Qwen (`qwen3-vl` by default).
+- Structured extraction:
+  - Invoices: vendor details, totals, currency, line items, and validation warnings.
+  - Contracts: counter-parties, key dates, and summary text.
+  - General documents: raw JSON snapshot for downstream processing.
+- Dashboard for browsing, filtering, and viewing document status and metadata.
+- Download originals, export extracted JSON, retry failed extractions, and bulk CSV invoice export.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Tech stack
+- **Backend:** Laravel 11, PHP 8.2+, Inertia
+- **Frontend:** Vue 3, Vite, Tailwind CSS
+- **AI:** Ollama (configurable base URL/model), Qwen3-VL prompts for classification and extraction
+- **Storage & queues:** Laravel filesystem + queue workers (e.g., `database`, `redis`, or `sqs` drivers)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Getting started
+### Prerequisites
+- PHP 8.2+ with Composer
+- Node.js 20+ with npm
+- A database supported by Laravel (SQLite/PostgreSQL/MySQL)
+- [Ollama](https://ollama.com) running with the `qwen3-vl:8b` model (or set `OLLAMA_MODEL` in `.env`)
 
-## Learning Laravel
+### Setup
+1. Clone the repo and install dependencies:
+   ```bash
+   composer install
+   npm install
+   ```
+2. Copy environment config and generate keys:
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
+3. Configure your database and Ollama settings in `.env`:
+   ```ini
+   DB_CONNECTION=sqlite # or mysql/pgsql
+   OLLAMA_BASE_URL=http://127.0.0.1:11434
+   OLLAMA_MODEL=qwen3-vl:8b
+   ```
+4. Run migrations and link storage:
+   ```bash
+   php artisan migrate
+   php artisan storage:link
+   ```
+5. Start the dev servers (separate terminals):
+   ```bash
+   php artisan serve
+   npm run dev
+   ```
+6. Process queued document extraction jobs:
+   ```bash
+   php artisan queue:work
+   ```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+### Sample workflow
+1. Register/login and open **Upload Document**.
+2. Submit a PDF/JPG/PNG; the file is stored and queued for extraction.
+3. Watch processing status on **All Documents**; download the original, export JSON, or retry if it failed.
+4. For invoices, export a CSV of all parsed invoices at `/exports/invoices.csv`.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Configuration notes
+- Ollama settings live in `config/ollama.php`; defaults target `http://127.0.0.1:11434` and `qwen3-vl:8b`.
+- Document files are stored under `storage/app/documents/{YYYY}/{MM}/` with unique names; originals remain downloadable.
+- Queue driver, cache, and storage can be swapped in `.env` for production.
 
-## Laravel Sponsors
+## Testing
+Run the backend test suite:
+```bash
+php artisan test
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Deployment tips
+- Use a persistent queue worker (e.g., Supervisor) so extraction stays responsive.
+- Serve the built assets in production with `npm run build` and a proper web server (Nginx/Apache) pointing to `public/`.
+- Keep Ollama alongside the app or on a secured internal host for low-latency model calls.
 
-### Premium Partners
-
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Project status & roadmap
+The core flows—upload, classify, extract, export—are in place. Future enhancements could include per-tenant billing, audit trails, S3 storage, and pluggable models beyond Qwen.
